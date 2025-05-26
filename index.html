@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Find Your Table - SBC Formal 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2em;
+      margin: 0;
+      overflow-x: hidden;
+      background-color: #115740;
+      position: relative;
+      z-index: 1;
+    }
+
+    .banner {
+      background-color: white;
+      height: 120px;
+      background-image: url("Banner.png");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    #guestInput {
+      padding: 0.5em;
+      font-size: 1.2em;
+      width: 90%;
+      max-width: 300px;
+    }
+
+    #suggestions {
+      margin: 0 auto;
+      width: 90%;
+      max-width: 300px;
+      text-align: left;
+      border: 1px solid #ccc;
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      position: absolute;
+      background-color: white;
+      z-index: 999;
+    }
+
+    .suggestion-item {
+      padding: 0.5em;
+      cursor: pointer;
+    }
+
+    .suggestion-item:hover {
+      background-color: #f0f0f0;
+    }
+
+    #result {
+      margin-top: 2em;
+      font-size: 3em; /* Increased font size */
+      color: white;
+      font-weight: bold;
+      position: relative;
+      z-index: 2;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: inline-block;
+      z-index: 2;
+    }
+
+    .logo-image {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 130px; /* Increased from 100px */
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    @media (max-width: 600px) {
+      .banner {
+        height: 80px;
+      }
+      #result {
+        font-size: 2.5em;
+      }
+      .logo-image {
+        width: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="banner"></div>
+
+  <h1 style="color: white;">Find Your Table</h1>
+  <p style="color: white;">Enter Guest Name:</p>
+
+  <div class="input-wrapper">
+    <input
+      type="text"
+      id="guestInput"
+      placeholder="Type guest name..."
+      autocomplete="off"
+    />
+    <div id="suggestions"></div>
+  </div>
+
+  <div id="result"></div>
+
+  <img src="logo.png" alt="Logo" class="logo-image" />
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    const confettiCanvas = document.getElementById("confetti-canvas");
+    const confettiInstance = confetti.create(confettiCanvas, { resize: true });
+
+    function launchConfetti() {
+      confettiInstance({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+    }
+
+    window.onload = launchConfetti;
+
+    let guestData = {};
+    fetch("students.json")
+      .then((response) => response.json())
+      .then((data) => {
+        guestData = data;
+      });
+
+    const input = document.getElementById("guestInput");
+    const suggestions = document.getElementById("suggestions");
+    const result = document.getElementById("result");
+
+    input.addEventListener("input", () => {
+      const query = input.value.trim().toLowerCase();
+      suggestions.innerHTML = "";
+      result.textContent = "";
+
+      if (!query) {
+        suggestions.style.display = "none";
+        return;
+      }
+
+      const matches = Object.keys(guestData).filter((name) =>
+        name.toLowerCase().includes(query)
+      );
+
+      if (matches.length === 0) {
+        suggestions.style.display = "none";
+        return;
+      }
+
+      matches.slice(0, 10).forEach((name) => {
+        const div = document.createElement("div");
+        div.textContent = name;
+        div.classList.add("suggestion-item");
+        div.addEventListener("click", () => {
+          input.value = name;
+          suggestions.innerHTML = "";
+          suggestions.style.display = "none";
+          result.textContent = guestData[name]; // Already includes "Table 14"
+          launchConfetti();
+        });
+        suggestions.appendChild(div);
+      });
+
+      suggestions.style.display = "block";
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".input-wrapper")) {
+        suggestions.style.display = "none";
+      }
+    });
+  </script>
+</body>
+</html>
